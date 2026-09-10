@@ -3,6 +3,15 @@ import type { ClaimRecord, CreateClaimInput } from "./claims.schema";
 
 const claims = new Map<string, ClaimRecord>();
 
+class ClaimNotFoundError extends Error {
+	statusCode = 404;
+
+	constructor(id: string) {
+		super(`Claim with ID "${id}" was not found`);
+		this.name = "ClaimNotFoundError";
+	}
+}
+
 export const claimsService = {
 	async createClaim(input: CreateClaimInput): Promise<ClaimRecord> {
 		const now = new Date().toISOString();
@@ -24,7 +33,7 @@ export const claimsService = {
 		const claim = claims.get(id);
 
 		if (!claim) {
-			throw new Error("claim not found");
+			throw new ClaimNotFoundError(id);
 		}
 
 		return claim;
