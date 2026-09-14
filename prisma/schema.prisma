@@ -1,0 +1,64 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ClaimSubmission {
+  id              String   @id
+  text            String
+  sourceUrl       String?
+  pageUrl         String?
+  pageTitle       String?
+  selectedHtml    String?
+  surroundingText String?
+  submittedFrom   String
+  status          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  extractedClaims ExtractedClaim[]
+  verification    VerificationRun?
+  source          Source?
+}
+
+model ExtractedClaim {
+  id        String   @id
+  claimId   String
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  claim     ClaimSubmission @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+}
+
+model VerificationRun {
+  id              String   @id
+  claimId         String   @unique
+  status          String
+  confidenceScore Float?
+  summary         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  claim           ClaimSubmission @relation(fields: [claimId], references: [id], onDelete: Cascade)
+}
+
+model Source {
+  id            String   @id
+  claimId       String   @unique
+  url           String
+  title         String?
+  publisher     String?
+  extractedText String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  claim         ClaimSubmission @relation(fields: [claimId], references: [id], onDelete: Cascade)
+}

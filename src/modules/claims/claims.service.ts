@@ -1,14 +1,17 @@
 import { randomUUID } from "node:crypto";
+
 import type { ClaimRecord, CreateClaimInput } from "./claims.schema";
-import type { VerificationRecord } from "../verification/verification.schema";
+import { extractClaimsFromText } from "./claims.extractor";
 import type { SourceRecord } from "../sources/sources.schema";
-import { verificationService } from "../verification/verification.service";
 import { sourcesService } from "../sources/sources.service";
+import type { VerificationRecord } from "../verification/verification.schema";
+import { verificationService } from "../verification/verification.service";
 
 type CreateClaimResult = {
 	claim: ClaimRecord;
 	verification: VerificationRecord;
-	sources: SourceRecord;
+	source: SourceRecord | null;
+	extractedClaims: string[];
 };
 
 const claims = new Map<string, ClaimRecord>();
@@ -40,20 +43,24 @@ export const claimsService = {
 			claimId: claim.id,
 		});
 
-		const sourceUrl = input.sourceUrl;
-		if (!sourceUrl) {
-			throw new Error("Claim sourceUrl is required");
-		}
+		const source = input.sourceUrl
+			? await sourcesService.createSource({
+					claimId: claim.id,
+					url: input.sourceUrl,
+				})
+			: null;
 
-		const source = await sourcesService.createSource({
-			claimId: claim.id,
-			url: sourceUrl,
-		});
+		const extractedClaims = extractClaimsFromText(input.text);
 
-		return { claim, verification, sources: source };
+		return {
+			claim,
+			verification,
+			source,
+			extractedClaims,
+		};
 	},
 
-	async getClaimById(id: string): Promise<ClaimRecord | null> {
+	async getClaimById(id: string): Promise<ClaimRecord> {
 		const claim = claims.get(id);
 
 		if (!claim) {
