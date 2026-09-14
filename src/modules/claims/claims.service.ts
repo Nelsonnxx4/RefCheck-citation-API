@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { ClaimRecord, CreateClaimInput } from "./claims.schema";
+import type { VerificationRecord } from "../verification/verification.schema";
+import { verificationService } from "../verification/verification.service";
+
+type CreateClaimResult = {
+	claim: ClaimRecord;
+	verification: VerificationRecord;
+};
 
 const claims = new Map<string, ClaimRecord>();
 
@@ -13,7 +20,7 @@ class ClaimNotFoundError extends Error {
 }
 
 export const claimsService = {
-	async createClaim(input: CreateClaimInput): Promise<ClaimRecord> {
+	async createClaim(input: CreateClaimInput): Promise<CreateClaimResult> {
 		const now = new Date().toISOString();
 
 		const claim: ClaimRecord = {
@@ -26,7 +33,11 @@ export const claimsService = {
 
 		claims.set(claim.id, claim);
 
-		return claim;
+		const verification = await verificationService.createVerification({
+			claimId: claim.id,
+		});
+
+		return { claim, verification };
 	},
 
 	async getClaimById(id: string): Promise<ClaimRecord | null> {

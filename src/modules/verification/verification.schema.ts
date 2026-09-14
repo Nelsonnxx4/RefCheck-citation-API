@@ -25,6 +25,7 @@ export type VerificationRecord = {
 	status: VerificationStatus;
 	confidenceScore: number | null;
 	summary: string | null;
+	message?: string;
 	createdAt: string;
 	updatedAt: string;
 };

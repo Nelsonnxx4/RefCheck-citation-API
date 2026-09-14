@@ -4,6 +4,7 @@ import type {
 	VerificationRecord,
 	CreateVerificationInput,
 } from "./verification.schema";
+import { get } from "node:http";
 
 const verifications = new Map<string, VerificationRecord>();
 
@@ -25,6 +26,16 @@ export const verificationService = {
 			updatedAt: now,
 		};
 		verifications.set(verification.id, verification);
+		return verification;
+	},
+
+	async getVerificationById(id: string): Promise<VerificationRecord> {
+		const verification = verifications.get(id);
+
+		if (!verification) {
+			throw new Error(`Verification with ID "${id}" was not found`);
+		}
+
 		return verification;
 	},
 };
