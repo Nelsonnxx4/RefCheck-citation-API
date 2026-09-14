@@ -1,11 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { ClaimRecord, CreateClaimInput } from "./claims.schema";
 import type { VerificationRecord } from "../verification/verification.schema";
+import type { SourceRecord } from "../sources/sources.schema";
 import { verificationService } from "../verification/verification.service";
+import { sourcesService } from "../sources/sources.service";
 
 type CreateClaimResult = {
 	claim: ClaimRecord;
 	verification: VerificationRecord;
+	sources: SourceRecord;
 };
 
 const claims = new Map<string, ClaimRecord>();
@@ -37,7 +40,17 @@ export const claimsService = {
 			claimId: claim.id,
 		});
 
-		return { claim, verification };
+		const sourceUrl = input.sourceUrl;
+		if (!sourceUrl) {
+			throw new Error("Claim sourceUrl is required");
+		}
+
+		const source = await sourcesService.createSource({
+			claimId: claim.id,
+			url: sourceUrl,
+		});
+
+		return { claim, verification, sources: source };
 	},
 
 	async getClaimById(id: string): Promise<ClaimRecord | null> {
